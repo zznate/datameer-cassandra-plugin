@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plugin
+   id="datameer-plugin"
+   name="Plugin Template"
+   version="1.0"
+   provider-name="MyCompany">
+
+   <requires>
+      <import plugin="plugin-das-extension-points"/>
+   </requires>
+</plugin>

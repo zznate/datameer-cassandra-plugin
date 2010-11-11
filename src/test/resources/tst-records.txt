@@ -1,0 +1,6 @@
+Transaction:1
+Customer:SomeCustomer
+Product-Id:product1
+Transaction:2
+Customer:OtherCustomer
+Product-Id:product2

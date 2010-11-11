@@ -1,0 +1,15 @@
+<project name="datameer-plugin">
+    <import file="build-plugin.xml" />
+
+    <!-- Add all plug-ins that this plug-in depends on here. -->
+    <addPluginToClasspath plugin="${sdk.home}/plugins/plugin-das-extension-points" />
+    
+    <!-- This can remain empty for now. -->
+    <target name="setupArtifactClasspath">
+    </target>
+    
+    <!-- Eclipse setting: All dependend projects are named here -->
+    <path id="dependend-projects">
+		<!-- <pathelement path="/plugin-das-extension-points" /> -->
+    </path>
+</project>

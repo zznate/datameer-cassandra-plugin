@@ -1,0 +1,230 @@
+<project name="build-sdk">
+
+    <macrodef name="buildJar">
+        <attribute name="jarName" />
+        <attribute name="mainClasses" />
+        <sequential>
+            <tstamp>
+                <format property="timestamp" pattern="MMM dd yyyy, HH:mm:ss" />
+            </tstamp>
+
+            <mkdir dir="${artifact.dir}" />
+            <echo>Building jar ${artifact.dir}/${jar.name}</echo>
+            <jar jarfile="${artifact.dir}/@{jarName}" basedir="@{mainClasses}" />
+        </sequential>
+    </macrodef>
+
+    <macrodef name="runTests">
+        <attribute name="srcDir" />
+        <attribute name="testReports" />
+        <attribute name="testClasses" />
+        <attribute name="artifactClasspath" />
+        <attribute name="forkmode" />
+        <attribute name="haltOnFailure" />
+        <sequential>
+    		<condition property="db-mode-property-name" value="db.mode">
+    			<isset property="db.mode"/>
+    		</condition>
+        	<condition property="test.groups" value="default">
+        		<not><isset property="test.groups"/></not>
+        	</condition>
+            <echo>forkmode=@{forkmode}</echo>
+            <echo>test.groups=${test.groups}</echo>
+            <delete dir="@{testReports}" />
+            <mkdir dir="@{testReports}" />
+            <echo>Using test classes @{testClasses}</echo>
+            <junit showoutput="false" printsummary="yes" haltonfailure="@{haltOnFailure}" haltonerror="@{haltOnFailure}" forkmode="@{forkmode}" fork="yes" maxmemory="256m" dir="${basedir}" errorProperty="tests.failed" failureProperty="tests.failed" >
+            	<classpath>
+                    <pathelement location="${instrumented.dir}" />
+                    <pathelement location="@{testClasses}" />
+                    <pathelement location="${build.dir.main-classes}" />
+                    <path refid="test.classpath" />
+                    <path refid="@{artifactClasspath}" />
+                    <path refid="artifact.classpath" />
+                    <path refid="compile.classpath" />
+                    <path refid="runtime.classpath" />
+                    <path refid="provided.classpath" />
+            		<path refid="job.classpath" />
+                </classpath>
+            	<formatter type="xml" />
+                <batchtest fork="yes" todir="@{testReports}" unless="testcase">
+                    <fileset dir="@{srcDir}">
+                        <include name="**/*Test.java" />
+                        <exclude name="**/Abstract*.java" />
+                    </fileset>
+                </batchtest>
+                <batchtest fork="yes" todir="@{testReports}" if="testcase">
+                    <fileset dir="@{srcDir}">
+                        <include name="**/${testcase}.java"  />
+                    </fileset>
+                </batchtest>
+            </junit>
+            <fail if="tests.failed">Tests failed!</fail>
+		</sequential>
+    </macrodef>
+    
+    <macrodef name="addPluginToClasspath">
+        <attribute name="plugin" />
+        <sequential>
+			<mkdir dir="@{plugin}/lib/compile"/>
+            <pathconvert property="compile.classpath.prop-@{plugin}" refid="compile.classpath" />
+            <path id="compile.classpath">
+                <pathelement path="${compile.classpath.prop-@{plugin}}" />
+                <fileset dir="@{plugin}/lib/compile">
+                    <include name="**/*.jar" />
+                    <exclude name="**/*-sources.jar" />
+                </fileset>
+            </path>
+
+			<mkdir dir="@{plugin}/lib/runtime"/>
+            <pathconvert property="runtime.classpath.prop-@{plugin}" refid="runtime.classpath" />
+            <path id="runtime.classpath">
+                <pathelement path="${runtime.classpath.prop-@{plugin}}" />
+                <fileset dir="@{plugin}/lib/runtime">
+                    <include name="**/*.jar" />
+                    <exclude name="**/*-sources.jar" />
+                </fileset>
+            </path>
+
+			<mkdir dir="@{plugin}/lib/test"/>
+            <pathconvert property="test.classpath.prop-@{plugin}" refid="test.classpath" />
+            <path id="test.classpath">
+                <pathelement path="${test.classpath.prop-@{plugin}}" />
+                <fileset dir="@{plugin}/lib/test">
+                    <include name="**/*.jar" />
+                    <exclude name="**/*-sources.jar" />
+                </fileset>
+            </path>
+
+			<mkdir dir="@{plugin}/lib/provided"/>
+            <pathconvert property="provided.classpath.prop-@{plugin}" refid="provided.classpath" />
+            <path id="provided.classpath">
+                <pathelement path="${provided.classpath.prop-@{plugin}}" />
+                <fileset dir="@{plugin}/lib/provided">
+                    <include name="**/*.jar" />
+                    <exclude name="**/*-sources.jar" />
+                </fileset>
+            </path>
+        </sequential>
+    </macrodef>
+    
+    <macrodef name="addScopedArtifactToClasspath">
+        <attribute name="root" />
+        <attribute name="scope" />
+        <sequential>
+            <pathconvert property="artifact.@{scope}.classpath.prop-@{root}" refid="artifact.@{scope}.classpath" />
+            <path id="artifact.@{scope}.classpath">
+                <pathelement path="${artifact.@{scope}.classpath.prop-@{root}}" />
+                <fileset dir="@{root}/${artifact.dir}">
+                    <include name="*-${version}-@{scope}.jar" />
+                </fileset>
+            </path>
+        </sequential>
+    </macrodef>
+
+    <macrodef name="addArtifactToClasspath">
+        <attribute name="root" />
+        <sequential>
+            <echo>Adding @{root}/${artifact.dir}/*-${version}.jar</echo>
+            <pathconvert property="artifact.classpath.prop-@{root}" refid="artifact.classpath" />
+            <path id="artifact.classpath">
+                <pathelement path="${artifact.classpath.prop-@{root}}" />
+                <fileset dir="@{root}/${artifact.dir}">
+                    <include name="*-${version}.jar" />
+                </fileset>
+            </path>
+
+            <addScopedArtifactToClasspath scope="test" root="@{root}"/>
+            <addScopedArtifactToClasspath scope="it" root="@{root}"/>
+        </sequential>
+    </macrodef>
+    
+    <macrodef name="compileTests">
+        <attribute name="testClasses" />
+        <attribute name="srcDir" />
+        <attribute name="resDir" />
+        <attribute name="artifactClasspath" />
+        <sequential>
+            <echo>*** Building Test Sources for ${ant.project.name} ***</echo>
+            <mkdir dir="@{testClasses}" />
+
+            <javac encoding="${build.encoding}" srcdir="@{srcDir}" includes="**/*.java" destdir="@{testClasses}" debug="${javac.debug}" optimize="${javac.optimize}" target="${javac.version}" source="${javac.version}" deprecation="${javac.deprecation}">
+                <compilerarg line="${javac.args} ${javac.args.warnings}" />
+                <classpath refid="@{artifactClasspath}" />
+                <classpath refid="artifact.classpath" />
+                <classpath refid="compile.classpath" />
+                <classpath refid="provided.classpath" />
+                <classpath refid="test.classpath" />
+                <classpath location="${build.dir.main-classes}" />
+            </javac>
+            <copy todir="@{testClasses}">
+                <fileset dir="@{resDir}"/>
+            </copy>
+	    </sequential>
+    </macrodef>
+    
+    <!-- ================================================================== -->
+    <!-- General cleaning sources                                           -->
+    <!-- ================================================================== -->
+    <target name="clean">
+        <echo>cleaning ${ant.project.name}</echo>
+        <delete includeemptydirs="true" failonerror="false">
+            <fileset dir="${build.dir}" excludes="classes-*-eclipse/" />
+        </delete>
+    </target>
+
+    <target name="clean-all">
+        <delete dir="${build.dir}" />
+    </target>
+
+    <!-- ================================================================== -->
+    <!-- Generating eclipse file                                            -->
+    <!-- ================================================================== -->
+
+    <target name="clean-eclipse">
+        <delete file=".classpath" />
+        <delete file=".eclipse" />
+        <delete file=".project" />
+        <delete dir=".settings" />
+    </target>
+
+    <target name="eclipse" depends="clean-eclipse">
+        <echo>Generating project files for ${ant.project.name}</echo>
+        <taskdef name="eclipse" classname="prantl.ant.eclipse.EclipseTask" classpathref="build.classpath" />
+        <mkdir dir="${build.dir.main-classes-eclipse}" />
+        <mkdir dir="${build.dir.test-classes-eclipse}" />
+        <mkdir dir="${build.dir.it-classes-eclipse}" />
+        <eclipse>
+            <settings>
+                <jdtcore compilercompliance="6.0" />
+                <resources encoding="UTF-8" />
+            </settings>
+            <project name="${ant.project.name}" />
+            <classpath>
+                <container path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.6" />
+
+                <source path="${basedir}/src/main/java" output="${build.dir.main-classes-eclipse}" />
+                <source path="${basedir}/src/main/resources" output="${build.dir.main-classes-eclipse}" />
+                <source path="${basedir}/src/main/generated" output="${build.dir.main-classes-eclipse}" />
+                <source path="${basedir}/src/test/java" output="${build.dir.test-classes-eclipse}" />
+                <source path="${basedir}/src/test/resources" output="${build.dir.test-classes-eclipse}" />
+                <source path="${basedir}/src/it/java" output="${build.dir.it-classes-eclipse}" />
+                <source path="${basedir}/src/it/resources" output="${build.dir.it-classes-eclipse}" />
+
+                <source pathref="dependend-projects" />
+
+                <output path="${build.dir.main-classes-eclipse}" />
+                <library pathref="test.classpath" exported="true" />
+                <library pathref="compile.classpath" exported="true"/>
+                <library pathref="runtime.classpath" exported="true"/>
+                <library pathref="provided.classpath" exported="true"/>
+                <library pathref="job.classpath" exported="true"/>
+            </classpath>
+        </eclipse>
+        <replace file=".settings/org.eclipse.jdt.core.prefs" token="org.eclipse.jdt.core.compiler.compliance=6.0" value="org.eclipse.jdt.core.compiler.compliance=1.6" />
+        <replaceregexp file=".classpath" match="path=&quot;(.*).jar&quot;" replace="path=&quot;\1.jar&quot; sourcepath=&quot;\1-sources.jar&quot;" flags="g" />
+        <!-- Also export projects in eclipse, so that refactoring works across multiple project modules -->
+        <replaceregexp file=".classpath" match="(kind=&quot;src&quot; path=&quot;/)" replace="exported=&quot;true&quot; \1" flags="g" />
+    </target>
+    
+</project>
