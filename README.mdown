@@ -1,0 +1,4 @@
+Overview
+---------
+
+This is a DataStore-type plug-in for using Apache Cassandra with Datameer. It is currently under active development.
