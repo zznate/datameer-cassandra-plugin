@@ -3,19 +3,12 @@ package com.riptano.datameer.importjob;
 import java.io.IOException;
 
 import org.apache.cassandra.hadoop.ConfigHelper;
-import org.apache.cassandra.thrift.Cassandra;
 import org.apache.cassandra.thrift.Cassandra.Client;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.thrift.TException;
-import org.apache.thrift.protocol.TBinaryProtocol;
-import org.apache.thrift.transport.TFramedTransport;
-import org.apache.thrift.transport.TSocket;
-import org.apache.thrift.transport.TTransport;
-import org.apache.thrift.transport.TTransportException;
 
 import datameer.dap.sdk.datastore.DataStoreModel;
 import datameer.dap.sdk.entity.DataStore;
-import datameer.dap.sdk.widget.WizardPageDefinition;
 
 /**
  * Sets up the connection information used to connect with Cassandra cluster
@@ -56,13 +49,9 @@ public class CassandraDataStoreModel implements DataStoreModel {
         }
     }
 
-    @Override
-    public WizardPageDefinition createDetailsWizardPage() {
 
-        return null;
-    }
 
-    @Override
+
     public void initFrom(DataStore dataStore) {
         // has all the connection information properties
         // host ip, port
@@ -71,7 +60,7 @@ public class CassandraDataStoreModel implements DataStoreModel {
         framed = dataStore.getBooleanProperty("useFramedTransport", true);
     }
 
-    @Override
+
     public void writeTo(DataStore dataStore) {
 
         

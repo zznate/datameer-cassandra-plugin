@@ -19,8 +19,9 @@ import datameer.dap.sdk.importjob.NoDataRecordSchemaDetector;
 import datameer.dap.sdk.importjob.RecordParser;
 import datameer.dap.sdk.importjob.RecordSchemaDetector;
 import datameer.dap.sdk.importjob.RecordSourceReader;
+import datameer.dap.sdk.importjob.Splitter;
 import datameer.dap.sdk.importjob.TextFieldAnalyzer;
-import datameer.dap.sdk.job.Splitter;
+
 
 public class CassandraColumnFamilyInputFormat extends AbstractImportFormat<CassandraRowRecord> {
 
@@ -64,7 +65,7 @@ public class CassandraColumnFamilyInputFormat extends AbstractImportFormat<Cassa
     public RecordSchemaDetector<CassandraRowRecord> createRecordSchemaDetector() throws IOException {
         return new NoDataRecordSchemaDetector<CassandraRowRecord>() {
             @Override
-            public Field[] guessFields() {
+            public Field[] detectFields() {
                 // loop through the config and pull the column names
                 return new Field[] { };
             }
@@ -85,7 +86,7 @@ public class CassandraColumnFamilyInputFormat extends AbstractImportFormat<Cassa
     }
 
     @Override
-    public Splitter getSplitter() throws IOException {
+    public CassandraColumnFamilySplitter getSplitter() throws IOException {
         // hand off connection information to noodle tokens and ring
         return new CassandraColumnFamilySplitter();
     }

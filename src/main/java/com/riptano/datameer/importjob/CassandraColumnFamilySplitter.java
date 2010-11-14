@@ -21,7 +21,7 @@ import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.log4j.Logger;
 import org.apache.thrift.TException;
 
-import datameer.dap.sdk.job.Splitter;
+import datameer.dap.sdk.importjob.Splitter;
 
 public class CassandraColumnFamilySplitter implements Splitter<CassandraColumnFamilySplit> {
 
@@ -37,11 +37,12 @@ public class CassandraColumnFamilySplitter implements Splitter<CassandraColumnFa
     }
 
     @Override
-    public CassandraColumnFamilySplit[] createSplits(Configuration conf) throws IOException {
+    public CassandraColumnFamilySplit[] createSplits(Splitter.SplitHint splitHint) throws IOException {
         // this is the "noodle the tokens" portion
         // just like getSplits() on CFIF
         // here is where we will hand off the Configuration
         // cannonical ranges and nodes holding replicas
+        Configuration conf = splitHint.getConf();
         List<TokenRange> masterRangeNodes = getRangeMap(conf);
 
         keyspace = ConfigHelper.getKeyspace(conf);
@@ -77,11 +78,6 @@ public class CassandraColumnFamilySplitter implements Splitter<CassandraColumnFa
         return null;
     }
 
-    @Override
-    public CassandraColumnFamilySplit[] resolveCombinedSplits(CassandraColumnFamilySplit arg0) throws IOException {
-
-        return null;
-    }
     
     private List<TokenRange> getRangeMap(Configuration conf) throws IOException
     {
@@ -148,4 +144,5 @@ public class CassandraColumnFamilySplitter implements Splitter<CassandraColumnFa
         }
     }
 
+    
 }

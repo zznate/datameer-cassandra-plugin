@@ -27,13 +27,12 @@ import datameer.dap.sdk.importjob.RecordParser;
 import datameer.dap.sdk.importjob.RecordSchemaDetector;
 import datameer.dap.sdk.importjob.RecordSourceReader;
 import datameer.dap.sdk.importjob.TextFieldAnalyzer;
-import datameer.dap.sdk.job.Splitter;
 import datameer.dap.sdk.property.NonEmptyValidator;
 import datameer.dap.sdk.property.NumberValidator;
 import datameer.dap.sdk.property.PropertyDefinition;
 import datameer.dap.sdk.property.PropertyGroupDefinition;
 import datameer.dap.sdk.property.PropertyType;
-import datameer.dap.sdk.widget.WizardPageDefinition;
+import datameer.dap.sdk.property.WizardPageDefinition;
 
 /**
  * Models job-specific information for the import job. In the Cassandra 
@@ -121,6 +120,18 @@ public class CassandraDataImportJobModel extends ImportJobModel<CassandraRowReco
     @Override
     public boolean canAutoMergeNewFields() {
         return true;
+    }
+
+    @Override
+    public void addPropertyValuesThatTriggerAFilterReset(List<Object> arg0) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    @Override
+    public void resetFilters() {
+        // TODO Auto-generated method stub
+        
     }
 }
 

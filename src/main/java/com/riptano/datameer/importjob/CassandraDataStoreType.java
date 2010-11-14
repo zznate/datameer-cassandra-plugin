@@ -4,11 +4,11 @@ import datameer.dap.sdk.common.DasContext;
 import datameer.dap.sdk.datastore.DataStoreModel;
 import datameer.dap.sdk.datastore.DataStoreType;
 import datameer.dap.sdk.entity.DataStore;
+import datameer.dap.sdk.property.WizardPageDefinition;
 
 public class CassandraDataStoreType extends DataStoreType {
 
-    public final static String ID = CassandraDataStoreType.class.getName();
-
+    public final static String ID = CassandraDataStoreType.class.getName();    
 
     public CassandraDataStoreType() {
         super(new CassandraDataImportJobType());
@@ -32,9 +32,10 @@ public class CassandraDataStoreType extends DataStoreType {
 
 
     @Override
-    public DataStoreModel createModel(DasContext arg0) {
-        
+    public WizardPageDefinition createDetailsWizardPage() {        
         return null;
     }
+    
+    
 
 }
