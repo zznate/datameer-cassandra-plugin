@@ -1,11 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <plugin
-   id="datameer-plugin"
+   id="datameer-plugin2"
    name="Plugin Template"
    version="1.0"
    provider-name="MyCompany">
 
    <requires>
+      <!-- List all plug-ins here that this plug-in depends on. You can write extensions 
+           for all extensions points of the dependent plug-ins and classes and jar files 
+           of these plug-ins will be added to the class path of this plug-in. -->
       <import plugin="plugin-das-extension-points"/>
    </requires>
 </plugin>
