@@ -1,4 +1,4 @@
-<project name="datameer-plugin2">
+<project name="datameer-plugin">
     <import file="build-plugin.xml" />
 
     <!-- Add all plug-ins that this plug-in depends on here. -->
