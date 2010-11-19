@@ -22,4 +22,9 @@ public class CassandraRowRecord {
     public Map<byte[], IColumn> getRows() {
         return rows;
     }
+    
+    @Override
+    public String toString() {
+        return String.format("CassandraRowRecord[key=%s,cols=%s]", key, rows != null ? rows.toString() : "<no rows found>");
+    }
 }
