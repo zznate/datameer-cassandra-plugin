@@ -67,6 +67,32 @@ public class CassandraColumnFamilySplit implements InputSplit {
         }
     }
 
+    
+    
+    /**
+     * @return the startToken
+     */
+    public String getStartToken() {
+        return startToken;
+    }
+
+
+    /**
+     * @return the endToken
+     */
+    public String getEndToken() {
+        return endToken;
+    }
+
+
+    /**
+     * @return the dataNodes
+     */
+    public String[] getDataNodes() {
+        return dataNodes;
+    }
+
+
     @Override
     public String toString()
     {

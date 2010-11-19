@@ -1,6 +1,7 @@
 package com.riptano.datameer.importjob;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Random;
 
@@ -48,12 +49,14 @@ public class CassandraColumnFamilyInputFormat extends AbstractImportFormat<Cassa
             @Override
             public void configureSchemaDetection(MapBasedRecordSchemaDetector<CassandraRowRecord> arg0, TextFieldAnalyzer arg1) {
                 // dont need to do anythng?
+                System.out.print("in CCFIF.configureSchemaDetection w. CRR: " + arg0 + " and TFA: " +arg1);
             }
 
             @Override
             public Map<String, Object> parseRecordSource(CassandraRowRecord arg0) throws Exception {
                 // field "origin" will be the column name
                 // map.put(columnName, value)
+                System.out.print("in CCFIF.parseRecordSource with CRR: " + arg0);
                 return null;
             }
         });
@@ -67,6 +70,7 @@ public class CassandraColumnFamilyInputFormat extends AbstractImportFormat<Cassa
             @Override
             public Field[] detectFields() {
                 // loop through the config and pull the column names
+                System.out.print("in CCFIF.createRecordSchemaDetector with...");
                 return new Field[] { };
             }
         };
@@ -77,18 +81,20 @@ public class CassandraColumnFamilyInputFormat extends AbstractImportFormat<Cassa
     public RecordSourceReader<CassandraRowRecord> createRecordSourceReader(InputSplit arg0) throws IOException {
         // record soure reader implements readNext() which will pull the row off the slice for this split
         // TODO bring over ColumnFamilyRecordReader, change initialize to use Configuration
+        
         return null;
     }
 
     @Override
     public long estimateRecordCount(InputSplit[] arg0) throws IOException {
+        System.out.print("in CCFIF.estimateRecordCount with IS[] " + Arrays.asList(arg0));
         return 0;
     }
 
     @Override
     public CassandraColumnFamilySplitter getSplitter() throws IOException {
         // hand off connection information to noodle tokens and ring
-        return new CassandraColumnFamilySplitter();
+        return new CassandraColumnFamilySplitter(importJobModel);
     }
     
     

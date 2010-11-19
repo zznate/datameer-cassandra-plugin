@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
+import org.apache.cassandra.hadoop.ConfigHelper;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapred.InputSplit;
 import org.apache.hadoop.mapred.JobConf;
@@ -54,6 +55,8 @@ public class CassandraDataImportJobModel extends ImportJobModel<CassandraRowReco
     private String keyspace;
     private String columnFamily;
     private List<String> columnNames;
+    private int batchCount = 10000;
+    private int sliceCount = 1000;
     
     public CassandraDataImportJobModel(DataSourceConfiguration conf) {
         super(conf);
@@ -66,6 +69,7 @@ public class CassandraDataImportJobModel extends ImportJobModel<CassandraRowReco
                 columnNames.add(col);
             }
         }        
+
     }    
     
     public String getKeyspace() {
@@ -74,6 +78,18 @@ public class CassandraDataImportJobModel extends ImportJobModel<CassandraRowReco
 
     public String getColumnFamily() {
         return columnFamily;
+    }
+    
+    public List<String> getColumnNames() {
+        return columnNames;
+    }
+    
+    public int getBatchCount() {
+        return batchCount;
+    }
+
+    public int getSliceCount() {
+        return sliceCount;
     }
 
     @Override
@@ -102,8 +118,8 @@ public class CassandraDataImportJobModel extends ImportJobModel<CassandraRowReco
         propertyDefinition = new PropertyDefinition(COLUMNS, "The Columns which will be imported (comma separated)", PropertyType.STRING);
         propertyDefinition.setRequired(false);
         propertyDefinition.setValidators(new NonEmptyValidator());
-        group.addPropertyDefinition(propertyDefinition);
-
+        group.addPropertyDefinition(propertyDefinition);     
+        
         return page;
     }
 

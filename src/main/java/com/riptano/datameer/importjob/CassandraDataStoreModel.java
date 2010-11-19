@@ -23,6 +23,13 @@ public class CassandraDataStoreModel implements DataStoreModel {
     private boolean framed;
     
     
+    // constructor taking dataStore
+    public CassandraDataStoreModel(DataStore dataStore) {
+        host = dataStore.getStringProperty("host", "localhost");
+        port = dataStore.getIntProperty("port", 9160);
+        framed = dataStore.getBooleanProperty("useFramedTransport", false);        
+    }
+    
     @Override
     public boolean isLocal() {
         return false;
@@ -30,6 +37,7 @@ public class CassandraDataStoreModel implements DataStoreModel {
 
     @Override
     public void setupConf(Configuration conf) {
+        // how do I take input from the page and apply it to Configuration?
         // here we can *WRITE TO* hadoop configuration
         ConfigHelper.setThriftContact(conf, host, port);
         conf.setBoolean(CassandraConnectionUtils.THRIFT_FRAMED_TRANSPORT, framed);
@@ -41,31 +49,16 @@ public class CassandraDataStoreModel implements DataStoreModel {
         Client client;
         try {
             client = CassandraConnectionUtils.createConnection(host, port, framed);
-            client.describe_version();            
+            client.describe_version();
         } catch (IOException ioe) {
-            ioe.printStackTrace();
+            // This happens if we cannot connect to the cluster. CCU.createConnections builds details.
+            throw new RuntimeException(ioe.getMessage(), ioe);
         } catch (TException e) {
-            e.printStackTrace();
-        }
+            // This would be odd and most likely indicate a Thrift version mismatch or Framed/Non-Framed transport issue
+            throw new RuntimeException("Could not complete describe_version operation against Apache Cassandra. " +
+                    "Check Thrift versions and Framed/Non-Framed transport configurations?" + e.getMessage(), e);
+        } 
     }
-
-
-
-
-    public void initFrom(DataStore dataStore) {
-        // has all the connection information properties
-        // host ip, port
-        host = dataStore.getStringProperty("host", null);
-        port = dataStore.getIntProperty("port", 9160);
-        framed = dataStore.getBooleanProperty("useFramedTransport", true);
-    }
-
-
-    public void writeTo(DataStore dataStore) {
-
-        
-    }
-    
         
 
 }

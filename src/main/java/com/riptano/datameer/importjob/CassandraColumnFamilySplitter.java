@@ -14,7 +14,13 @@ import java.util.concurrent.Future;
 import org.apache.cassandra.hadoop.ColumnFamilySplit;
 import org.apache.cassandra.hadoop.ConfigHelper;
 import org.apache.cassandra.thrift.Cassandra;
+import org.apache.cassandra.thrift.ColumnParent;
+import org.apache.cassandra.thrift.ConsistencyLevel;
 import org.apache.cassandra.thrift.InvalidRequestException;
+import org.apache.cassandra.thrift.KeyRange;
+import org.apache.cassandra.thrift.KeySlice;
+import org.apache.cassandra.thrift.SlicePredicate;
+import org.apache.cassandra.thrift.SliceRange;
 import org.apache.cassandra.thrift.TokenRange;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.InputSplit;
@@ -27,13 +33,36 @@ public class CassandraColumnFamilySplitter implements Splitter<CassandraColumnFa
 
     private static Logger log = Logger.getLogger(CassandraColumnFamilySplit.class);
     
-    private String keyspace;
-    private String cfName;
+    private CassandraDataImportJobModel cassandraDataImportJobModel;
+    
+    public CassandraColumnFamilySplitter(CassandraDataImportJobModel importJobModel) {
+        cassandraDataImportJobModel = importJobModel;
+    }
     
     @Override
     public CassandraColumnFamilySplit[] createPreviewSplits(Configuration arg0, int arg1) throws IOException {
-
-        return null;
+        Cassandra.Client client = CassandraConnectionUtils.createConnection(arg0);
+                
+        List<TokenRange> masterRangeNodes = getRangeMap(arg0);
+        List<CassandraColumnFamilySplit> splits = new ArrayList<CassandraColumnFamilySplit>(masterRangeNodes.size());
+        for (TokenRange tokenRange : masterRangeNodes) {
+            splits.add(new CassandraColumnFamilySplit(tokenRange.start_token, tokenRange.end_token, tokenRange.endpoints.toArray(new String[]{})));
+        }
+        /*
+        SlicePredicate sp = new SlicePredicate();
+        sp.setColumn_names(new ArrayList<byte[]>());
+        sp.setSlice_range(new SliceRange(new byte[]{}, new byte[]{}, false, 100));
+        List<KeySlice> results = null;
+        try {
+            results = client.get_range_slices(keyspace, new ColumnParent(cfName), sp, new KeyRange(100), ConsistencyLevel.QUORUM);
+            for (KeySlice keySlice : results) {
+                keySlice.getKey();
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage(), e);
+        }
+        */
+        return splits.toArray(new CassandraColumnFamilySplit[]{});
     }
 
     @Override
@@ -44,23 +73,20 @@ public class CassandraColumnFamilySplitter implements Splitter<CassandraColumnFa
         // cannonical ranges and nodes holding replicas
         Configuration conf = splitHint.getConf();
         List<TokenRange> masterRangeNodes = getRangeMap(conf);
-
-        keyspace = ConfigHelper.getKeyspace(conf);
-        cfName = ConfigHelper.getColumnFamily(conf);
         
         // cannonical ranges, split into pieces, fetching the splits in parallel 
         ExecutorService executor = Executors.newCachedThreadPool();
-        List<InputSplit> splits = new ArrayList<InputSplit>();
+        List<CassandraColumnFamilySplit> splits = new ArrayList<CassandraColumnFamilySplit>();
 
         try {
-            List<Future<List<InputSplit>>> splitfutures = new ArrayList<Future<List<InputSplit>>>();
+            List<Future<List<CassandraColumnFamilySplit>>> splitfutures = new ArrayList<Future<List<CassandraColumnFamilySplit>>>();
             for (TokenRange range : masterRangeNodes) {
                 // for each range, pick a live owner and ask it to compute bite-sized splits
                 splitfutures.add(executor.submit(new SplitCallable(range, conf)));
             }
     
             // wait until we have all the results back
-            for (Future<List<InputSplit>> futureInputSplits : splitfutures) {
+            for (Future<List<CassandraColumnFamilySplit>> futureInputSplits : splitfutures) {
                 try {
                     splits.addAll(futureInputSplits.get());
                 } 
@@ -75,19 +101,18 @@ public class CassandraColumnFamilySplitter implements Splitter<CassandraColumnFa
 
         assert splits.size() > 0;
         Collections.shuffle(splits, new Random(System.nanoTime()));
-        return null;
+        return splits.toArray(new CassandraColumnFamilySplit[]{});
     }
 
     
     private List<TokenRange> getRangeMap(Configuration conf) throws IOException
     {
         Cassandra.Client client = 
-            CassandraConnectionUtils.createConnection(ConfigHelper.getInitialAddress(conf), 
-                    ConfigHelper.getThriftPort(conf), true);
+            CassandraConnectionUtils.createConnection(conf);
 
         List<TokenRange> map;
         try {
-            map = client.describe_ring(ConfigHelper.getKeyspace(conf));
+            map = client.describe_ring(cassandraDataImportJobModel.getKeyspace());
         } catch (org.apache.thrift.TException e) {
             throw new RuntimeException(e);
         }
@@ -104,7 +129,7 @@ public class CassandraColumnFamilySplitter implements Splitter<CassandraColumnFa
         int splitsize = ConfigHelper.getInputSplitSize(conf);
         try {
             Cassandra.Client client = 
-                CassandraConnectionUtils.createConnection(range.endpoints.get(0), ConfigHelper.getThriftPort(conf), true);
+                CassandraConnectionUtils.createConnection(range.endpoints.get(0), ConfigHelper.getThriftPort(conf), false);
             
             splits = client.describe_splits(range.start_token, range.end_token, splitsize);
         } catch (TException e) {
@@ -114,7 +139,7 @@ public class CassandraColumnFamilySplitter implements Splitter<CassandraColumnFa
     }
 
     
-    class SplitCallable implements Callable<List<InputSplit>> {
+    class SplitCallable implements Callable<List<CassandraColumnFamilySplit>> {
 
         private final TokenRange range;
         private final Configuration conf;
@@ -124,10 +149,11 @@ public class CassandraColumnFamilySplitter implements Splitter<CassandraColumnFa
             this.conf = conf;
         }
 
-        public List<InputSplit> call() throws Exception
+        public List<CassandraColumnFamilySplit> call() throws Exception
         {
-            ArrayList<InputSplit> splits = new ArrayList<InputSplit>();
-            List<String> tokens = getSubSplits(keyspace, cfName, range, conf);
+            ArrayList<CassandraColumnFamilySplit> splits = new ArrayList<CassandraColumnFamilySplit>();
+            List<String> tokens = getSubSplits(cassandraDataImportJobModel.getKeyspace(), 
+                    cassandraDataImportJobModel.getColumnFamily(), range, conf);
 
             // turn the sub-ranges into InputSplits
             String[] endpoints = range.endpoints.toArray(new String[range.endpoints.size()]);
@@ -137,7 +163,7 @@ public class CassandraColumnFamilySplitter implements Splitter<CassandraColumnFa
             }
             
             for (int i = 1; i < tokens.size(); i++) {
-                ColumnFamilySplit split = new ColumnFamilySplit(tokens.get(i - 1), tokens.get(i), endpoints);
+                CassandraColumnFamilySplit split = new CassandraColumnFamilySplit(tokens.get(i - 1), tokens.get(i), endpoints);
                 splits.add(split);
             }
             return splits;
