@@ -57,7 +57,6 @@ public class CassandraColumnFamilyRecordSourceReader implements RecordSourceRead
 
     @Override
     public long getPos() throws IOException {
-        // rowsRead // totalRowCount
         return rowIterator.rowsRead() / dataImportJobModel.getBatchCount();
     }
 
@@ -68,7 +67,10 @@ public class CassandraColumnFamilyRecordSourceReader implements RecordSourceRead
         }
         Pair<String, SortedMap<byte[], IColumn>> next = rowIterator.next();
         if ( log.isDebugEnabled() ) {
-            log.debug("Read row: " + next.toString());
+            log.debug("Read row: " + next);
+        }
+        if ( next == null ) {
+           return null; 
         }
         return new CassandraRowRecord(next.left, next.right);        
     }
@@ -89,10 +91,10 @@ public class CassandraColumnFamilyRecordSourceReader implements RecordSourceRead
                 client = CassandraConnectionUtils.createConnection(configuration);
                 
                 partitioner = FBUtilities.newPartitioner(client.describe_partitioner());
-                log.info("Partitioner: " + partitioner);
+
                 Map<String, String> info = client.describe_keyspace(dataImportJobModel.getKeyspace())
                 .get(dataImportJobModel.getColumnFamily());
-                log.info("keyspaces: " + info);
+                
                 comparator = FBUtilities.getComparator(info.get("CompareWith"));
                 subComparator = FBUtilities.getComparator(info.get("CompareSubcolumnsWith"));
             } catch (TException e) {
@@ -120,14 +122,14 @@ public class CassandraColumnFamilyRecordSourceReader implements RecordSourceRead
                 rows = null;
                 return;
             }
-            log.info("Working with startToken: " + startToken);
-            log.info("Working with endToken: " + columnFamilySplit.getEndToken());
 
             KeyRange keyRange = new KeyRange(dataImportJobModel.getBatchCount())
                                 .setStart_token(startToken)
                                 .setEnd_token(columnFamilySplit.getEndToken());
 
-            log.info("Using KeyRange: " + keyRange);
+            if ( log.isDebugEnabled() ) {
+                log.debug("Using KeyRange: " + keyRange);
+            }
 
             try {
 

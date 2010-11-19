@@ -44,23 +44,9 @@ public class CassandraColumnFamilySplitter implements Splitter<CassandraColumnFa
         List<TokenRange> masterRangeNodes = getRangeMap(arg0);
         List<CassandraColumnFamilySplit> splits = new ArrayList<CassandraColumnFamilySplit>(masterRangeNodes.size());
         for (TokenRange tokenRange : masterRangeNodes) {
-            log.info("TokenRange: " + tokenRange);
             splits.add(new CassandraColumnFamilySplit(tokenRange.start_token, tokenRange.end_token, tokenRange.endpoints.toArray(new String[]{})));
         }
-        /*
-        SlicePredicate sp = new SlicePredicate();
-        sp.setColumn_names(new ArrayList<byte[]>());
-        sp.setSlice_range(new SliceRange(new byte[]{}, new byte[]{}, false, 100));
-        List<KeySlice> results = null;
-        try {
-            results = client.get_range_slices(keyspace, new ColumnParent(cfName), sp, new KeyRange(100), ConsistencyLevel.QUORUM);
-            for (KeySlice keySlice : results) {
-                keySlice.getKey();
-            }
-        } catch (Exception e) {
-            throw new RuntimeException(e.getMessage(), e);
-        }
-        */
+
         return splits.toArray(new CassandraColumnFamilySplit[]{});
     }
 
