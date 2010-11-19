@@ -10,6 +10,8 @@ import java.util.Map;
 import java.util.Random;
 
 import org.apache.cassandra.hadoop.ConfigHelper;
+import org.apache.cassandra.thrift.SlicePredicate;
+import org.apache.cassandra.thrift.SliceRange;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapred.InputSplit;
 import org.apache.hadoop.mapred.JobConf;
@@ -55,7 +57,7 @@ public class CassandraDataImportJobModel extends ImportJobModel<CassandraRowReco
     private String keyspace;
     private String columnFamily;
     private List<String> columnNames;
-    private int batchCount = 10000;
+    private int batchCount = 1000;
     private int sliceCount = 1000;
     
     public CassandraDataImportJobModel(DataSourceConfiguration conf) {
@@ -68,8 +70,7 @@ public class CassandraDataImportJobModel extends ImportJobModel<CassandraRowReco
             for (String col : conf.getStringProperty(COLUMNS, null).split(",")) {
                 columnNames.add(col);
             }
-        }        
-
+        }                
     }    
     
     public String getKeyspace() {
@@ -90,6 +91,21 @@ public class CassandraDataImportJobModel extends ImportJobModel<CassandraRowReco
 
     public int getSliceCount() {
         return sliceCount;
+    }
+    
+    public SlicePredicate getSlicePredicate() {
+        SlicePredicate sp = new SlicePredicate();
+        //sp.addToColumn_names(elem)
+        if ( columnNames != null && columnNames.size() > 0 ) {
+            for (String colName : columnNames) {
+                try {
+                    sp.addToColumn_names(colName.getBytes("UTF-8"));
+                } catch (Exception e) { }            
+            }
+        } else {
+            sp.setSlice_range(new SliceRange(new byte[]{}, new byte[]{}, false, 2));
+        }
+        return sp;
     }
 
     @Override

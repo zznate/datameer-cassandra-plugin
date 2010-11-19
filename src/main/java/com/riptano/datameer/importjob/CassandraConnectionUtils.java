@@ -17,7 +17,7 @@ public class CassandraConnectionUtils {
     
     public static Cassandra.Client createConnection(Configuration conf) throws IOException {
         return createConnection(ConfigHelper.getInitialAddress(conf), 
-                    ConfigHelper.getThriftPort(conf), conf.getBoolean(THRIFT_FRAMED_TRANSPORT, false));
+                    ConfigHelper.getThriftPort(conf), false);
     }
     
     public static Cassandra.Client createConnection(String host, Integer port, boolean framed) throws IOException {

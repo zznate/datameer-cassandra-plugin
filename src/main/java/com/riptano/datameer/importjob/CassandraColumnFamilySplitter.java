@@ -40,12 +40,11 @@ public class CassandraColumnFamilySplitter implements Splitter<CassandraColumnFa
     }
     
     @Override
-    public CassandraColumnFamilySplit[] createPreviewSplits(Configuration arg0, int arg1) throws IOException {
-        Cassandra.Client client = CassandraConnectionUtils.createConnection(arg0);
-                
+    public CassandraColumnFamilySplit[] createPreviewSplits(Configuration arg0, int arg1) throws IOException {                
         List<TokenRange> masterRangeNodes = getRangeMap(arg0);
         List<CassandraColumnFamilySplit> splits = new ArrayList<CassandraColumnFamilySplit>(masterRangeNodes.size());
         for (TokenRange tokenRange : masterRangeNodes) {
+            log.info("TokenRange: " + tokenRange);
             splits.add(new CassandraColumnFamilySplit(tokenRange.start_token, tokenRange.end_token, tokenRange.endpoints.toArray(new String[]{})));
         }
         /*
@@ -150,8 +149,7 @@ public class CassandraColumnFamilySplitter implements Splitter<CassandraColumnFa
         }
 
         public List<CassandraColumnFamilySplit> call() throws Exception
-        {
-            ArrayList<CassandraColumnFamilySplit> splits = new ArrayList<CassandraColumnFamilySplit>();
+        {            
             List<String> tokens = getSubSplits(cassandraDataImportJobModel.getKeyspace(), 
                     cassandraDataImportJobModel.getColumnFamily(), range, conf);
 
@@ -162,12 +160,17 @@ public class CassandraColumnFamilySplitter implements Splitter<CassandraColumnFa
                 endpoints[i] = InetAddress.getByName(endpoints[i]).getHostName();
             }
             
-            for (int i = 1; i < tokens.size(); i++) {
-                CassandraColumnFamilySplit split = new CassandraColumnFamilySplit(tokens.get(i - 1), tokens.get(i), endpoints);
-                splits.add(split);
-            }
-            return splits;
+            return buildSplits(tokens, endpoints);
         }
+    }
+    
+    private List<CassandraColumnFamilySplit> buildSplits(List<String> tokens, String[] endpoints) {
+        ArrayList<CassandraColumnFamilySplit> splits = new ArrayList<CassandraColumnFamilySplit>();
+        for (int i = 1; i < tokens.size(); i++) {
+            CassandraColumnFamilySplit split = new CassandraColumnFamilySplit(tokens.get(i - 1), tokens.get(i), endpoints);
+            splits.add(split);
+        }
+        return splits;
     }
 
     

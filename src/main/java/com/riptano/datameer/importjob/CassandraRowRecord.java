@@ -7,15 +7,15 @@ import org.apache.cassandra.db.IColumn;
 
 public class CassandraRowRecord {
 
-    private final byte[] key;
+    private final String key;
     private final SortedMap<byte[], IColumn> rows;
     
-    public CassandraRowRecord(byte[] key, SortedMap<byte[], IColumn> rows) {
+    public CassandraRowRecord(String key, SortedMap<byte[], IColumn> rows) {
         this.key = key;
         this.rows = rows;
     }
     
-    public byte[] getKey() {
+    public String getKey() {
         return key;
     }
     

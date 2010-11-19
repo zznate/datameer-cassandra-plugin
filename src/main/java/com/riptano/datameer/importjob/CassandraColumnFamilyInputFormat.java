@@ -27,11 +27,13 @@ import datameer.dap.sdk.importjob.TextFieldAnalyzer;
 public class CassandraColumnFamilyInputFormat extends AbstractImportFormat<CassandraRowRecord> {
 
     private CassandraDataImportJobModel importJobModel;
+    private Configuration configuration;
     
     public CassandraColumnFamilyInputFormat(CassandraDataImportJobModel importJobModel,
             boolean reparsableRecordSource) {
         super(importJobModel, reparsableRecordSource);
         this.importJobModel = importJobModel;
+        
     }
 
     @Override
@@ -40,7 +42,11 @@ public class CassandraColumnFamilyInputFormat extends AbstractImportFormat<Cassa
         // 
         //importJobModel.getConfiguration();
         // deduce the token space and host ring like CFIF
+        //jobConf.get
+        this.configuration = jobConf;
     }
+    
+    
 
     @Override
     public RecordParser<CassandraRowRecord> createRecordParser(Field[] arg0) throws IOException {
@@ -82,7 +88,7 @@ public class CassandraColumnFamilyInputFormat extends AbstractImportFormat<Cassa
         // record soure reader implements readNext() which will pull the row off the slice for this split
         // TODO bring over ColumnFamilyRecordReader, change initialize to use Configuration
         
-        return null;
+        return new CassandraColumnFamilyRecordSourceReader(importJobModel, (CassandraColumnFamilySplit)arg0, configuration);
     }
 
     @Override
