@@ -2,9 +2,12 @@ package com.riptano.datameer.importjob;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
+import java.util.SortedMap;
 
+import org.apache.cassandra.db.IColumn;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapred.InputSplit;
 import org.apache.hadoop.mapred.JobConf;
@@ -60,10 +63,13 @@ public class CassandraColumnFamilyInputFormat extends AbstractImportFormat<Cassa
 
             @Override
             public Map<String, Object> parseRecordSource(CassandraRowRecord arg0) throws Exception {
-                // field "origin" will be the column name
-                // map.put(columnName, value)
-                System.out.print("in CCFIF.parseRecordSource with CRR: " + arg0);
-                return null;
+
+                Map<String, Object> source = new HashMap<String, Object>();
+                source.put("key", arg0.getKey());
+                for (Map.Entry<byte[], IColumn> column : arg0.getRows().entrySet()) {
+                    source.put(new String(column.getKey(), "utf-8"), column.getValue());
+                }
+                return source;
             }
         });
     }
