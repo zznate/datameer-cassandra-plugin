@@ -54,14 +54,14 @@ public class CassandraColumnFamilyInputFormat extends AbstractImportFormat<Cassa
 
     @Override
     public RecordParser<CassandraRowRecord> createRecordParser(Field[] arg0) throws IOException {
-       return new CassandraRecordParser(arg0);
+       return new CassandraRecordParser(arg0, importJobModel);
     }
 
     
 
     @Override
     public RecordSchemaDetector<CassandraRowRecord> createRecordSchemaDetector() throws IOException {
-        return new CassandraRowRecordSchemaDector();
+        return new CassandraRowRecordSchemaDector(importJobModel);
     }
     
 

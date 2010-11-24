@@ -1,5 +1,7 @@
 package com.riptano.datameer.importjob;
 
+import java.util.List;
+
 import org.apache.hadoop.mapred.InputSplit;
 
 import datameer.dap.sdk.common.Field;
@@ -9,8 +11,11 @@ import datameer.dap.sdk.importjob.AbstractRecordParser;
 
 public class CassandraRecordParser extends AbstractRecordParser<CassandraRowRecord> {
     
-    public CassandraRecordParser(Field[] fields) {
+    private CassandraDataImportJobModel dataImportJobModel;
+    
+    public CassandraRecordParser(Field[] fields, CassandraDataImportJobModel dataImportJobModel) {
         super(fields);
+        this.dataImportJobModel = dataImportJobModel;
     }
 
     @Override
@@ -21,10 +26,11 @@ public class CassandraRecordParser extends AbstractRecordParser<CassandraRowReco
     @Override
     public void parse(RecordCollector arg0, CassandraRowRecord arg1) throws Exception {
         int index = 0;
+        List<String> columns = dataImportJobModel.getColumnNames();
         Object[] values = new Object[getIncludedFields().length];
         for (Field field : getIncludedFields()) {
             String origin = field.getOrigin();
-            if (origin.equals("01")) {
+            if (columns.contains(origin)) {
                 values[index++] = arg1.getKey();
             }
         }
