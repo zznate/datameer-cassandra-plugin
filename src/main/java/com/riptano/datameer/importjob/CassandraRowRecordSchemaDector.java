@@ -23,9 +23,13 @@ public class CassandraRowRecordSchemaDector extends NoDataRecordSchemaDetector<C
             for (int i = 0; i < fields.length; i++) {
                 fields[i] = new Field(columns.get(i), columns.get(i), FieldType.STRING, true);                                                            
             }
+        } else {
+            fields = new Field[]{new Field("key", "_key", FieldType.STRING, true)};
         }
         return fields; 
     }
+    
+    public static final String KEY_FIELD = "_key";
 
     
 }
