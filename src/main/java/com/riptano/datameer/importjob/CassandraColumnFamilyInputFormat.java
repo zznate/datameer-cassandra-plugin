@@ -14,6 +14,7 @@ import org.apache.hadoop.mapred.JobConf;
 
 import datameer.dap.sdk.common.Field;
 import datameer.dap.sdk.common.RecordCollector;
+import datameer.dap.sdk.function.FieldType;
 import datameer.dap.sdk.importjob.AbstractImportFormat;
 import datameer.dap.sdk.importjob.ImportJobModel;
 import datameer.dap.sdk.importjob.MapBasedRecordParser;
@@ -53,47 +54,21 @@ public class CassandraColumnFamilyInputFormat extends AbstractImportFormat<Cassa
 
     @Override
     public RecordParser<CassandraRowRecord> createRecordParser(Field[] arg0) throws IOException {
-        return new MapBasedRecordParser<CassandraRowRecord>(arg0, new MapParser<CassandraRowRecord>() {
-
-            @Override
-            public void configureSchemaDetection(MapBasedRecordSchemaDetector<CassandraRowRecord> arg0, TextFieldAnalyzer arg1) {
-                // dont need to do anythng?
-                System.out.print("in CCFIF.configureSchemaDetection w. CRR: " + arg0 + " and TFA: " +arg1);
-            }
-
-            @Override
-            public Map<String, Object> parseRecordSource(CassandraRowRecord arg0) throws Exception {
-
-                Map<String, Object> source = new HashMap<String, Object>();
-                source.put("key", arg0.getKey());
-                for (Map.Entry<byte[], IColumn> column : arg0.getRows().entrySet()) {
-                    source.put(new String(column.getKey(), "utf-8"), column.getValue());
-                }
-                return source;
-            }
-        });
+       return new CassandraRecordParser(arg0);
     }
 
     
 
     @Override
     public RecordSchemaDetector<CassandraRowRecord> createRecordSchemaDetector() throws IOException {
-        return new NoDataRecordSchemaDetector<CassandraRowRecord>() {
-            @Override
-            public Field[] detectFields() {
-                // loop through the config and pull the column names
-                System.out.print("in CCFIF.createRecordSchemaDetector with...");
-                return new Field[] { };
-            }
-        };
-
+        return new CassandraRowRecordSchemaDector();
     }
+    
 
     @Override
     public RecordSourceReader<CassandraRowRecord> createRecordSourceReader(InputSplit arg0) throws IOException {
         // record soure reader implements readNext() which will pull the row off the slice for this split
-        // TODO bring over ColumnFamilyRecordReader, change initialize to use Configuration
-        
+        // TODO bring over ColumnFamilyRecordReader, change initialize to use Configuration        
         return new CassandraColumnFamilyRecordSourceReader(importJobModel, (CassandraColumnFamilySplit)arg0, configuration);
     }
 

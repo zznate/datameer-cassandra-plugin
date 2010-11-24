@@ -20,6 +20,10 @@ public class CassandraColumnFamilySplit implements InputSplit {
     private String endToken;
     private String[] dataNodes;
 
+    public CassandraColumnFamilySplit() {
+        
+    }
+    
     public CassandraColumnFamilySplit(String startToken, String endToken, String[] dataNodes)
     {
         assert startToken != null;
