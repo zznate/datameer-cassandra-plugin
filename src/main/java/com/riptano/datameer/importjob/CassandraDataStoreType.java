@@ -21,7 +21,7 @@ public class CassandraDataStoreType extends DataStoreType {
 
     @Override
     public DataStoreModel createModel(DasContext context, DataStore dataStore) {
-        // do we pass props here? in in CDSM.initFrom()        
+        // do we pass props here? in in CDSM.initFrom()
         return new CassandraDataStoreModel(dataStore);
     }
 

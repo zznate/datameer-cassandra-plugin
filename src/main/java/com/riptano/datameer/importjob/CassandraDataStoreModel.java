@@ -27,7 +27,19 @@ public class CassandraDataStoreModel implements DataStoreModel {
     public CassandraDataStoreModel(DataStore dataStore) {
         host = dataStore.getStringProperty("host", "localhost");
         port = dataStore.getIntProperty("port", 9160);
-        framed = dataStore.getBooleanProperty("useFramedTransport", false);        
+        framed = dataStore.getBooleanProperty("useFramedTransport", false);              
+    }
+    
+    public String getCassandraHost() {
+        return host;        
+    }
+    
+    public int getCassandraPort() {
+        return port;
+    }
+    
+    public boolean getUseFramed() {
+        return framed;
     }
     
     @Override

@@ -7,7 +7,7 @@ import datameer.dap.sdk.importjob.ImportJobType;
 public class CassandraDataImportJobType extends ImportJobType<CassandraRowRecord> {
 
     @Override
-    public ImportJobModel<CassandraRowRecord> createModel(DataSourceConfiguration arg0) {
+    public ImportJobModel<CassandraRowRecord> createModel(DataSourceConfiguration arg0) {        
         return new CassandraDataImportJobModel(arg0);
     }
 

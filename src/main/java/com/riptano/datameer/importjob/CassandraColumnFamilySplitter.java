@@ -93,7 +93,7 @@ public class CassandraColumnFamilySplitter implements Splitter<CassandraColumnFa
     private List<TokenRange> getRangeMap(Configuration conf) throws IOException
     {
         Cassandra.Client client = 
-            CassandraConnectionUtils.createConnection(conf);
+            CassandraConnectionUtils.createConnection(cassandraDataImportJobModel);
 
         List<TokenRange> map;
         try {

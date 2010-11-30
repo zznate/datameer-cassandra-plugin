@@ -59,9 +59,11 @@ public class CassandraDataImportJobModel extends ImportJobModel<CassandraRowReco
     private List<String> columnNames;
     private int batchCount = 1000;
     private int sliceCount = 1000;
+    private CassandraDataStoreModel dataStoreModel;
     
     public CassandraDataImportJobModel(DataSourceConfiguration conf) {
         super(conf);
+        dataStoreModel = new CassandraDataStoreModel(conf.getDataStore());
         keyspace = conf.getStringProperty(KEYSPACE, null);
         columnFamily = conf.getStringProperty(COLUMN_FAMILY, null);
         // if columnNames is empty, we'll take them all
@@ -91,6 +93,10 @@ public class CassandraDataImportJobModel extends ImportJobModel<CassandraRowReco
 
     public int getSliceCount() {
         return sliceCount;
+    }
+    
+    public CassandraDataStoreModel getCassandraDataStoreModel() {
+        return dataStoreModel;
     }
     
     public SlicePredicate getSlicePredicate() {

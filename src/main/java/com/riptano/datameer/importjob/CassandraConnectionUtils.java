@@ -15,9 +15,10 @@ public class CassandraConnectionUtils {
     
     public static final String THRIFT_FRAMED_TRANSPORT = "use_thrift_framed_transport";
     
-    public static Cassandra.Client createConnection(Configuration conf) throws IOException {
-        return createConnection(ConfigHelper.getInitialAddress(conf), 
-                    ConfigHelper.getThriftPort(conf), false);
+    public static Cassandra.Client createConnection(CassandraDataImportJobModel dataImportJobModel) throws IOException {
+        return createConnection(dataImportJobModel.getCassandraDataStoreModel().getCassandraHost(), 
+                    dataImportJobModel.getCassandraDataStoreModel().getCassandraPort(), 
+                    dataImportJobModel.getCassandraDataStoreModel().getUseFramed());
     }
     
     public static Cassandra.Client createConnection(String host, Integer port, boolean framed) throws IOException {

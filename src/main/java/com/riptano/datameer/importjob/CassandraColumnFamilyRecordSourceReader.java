@@ -88,7 +88,7 @@ public class CassandraColumnFamilyRecordSourceReader implements RecordSourceRead
 
         private RowIterator() {           
             try {
-                client = CassandraConnectionUtils.createConnection(configuration);
+                client = CassandraConnectionUtils.createConnection(dataImportJobModel);
                 
                 partitioner = FBUtilities.newPartitioner(client.describe_partitioner());
 
