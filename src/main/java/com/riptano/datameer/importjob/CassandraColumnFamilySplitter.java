@@ -113,9 +113,10 @@ public class CassandraColumnFamilySplitter implements Splitter<CassandraColumnFa
         List<String> splits;
         int splitsize = ConfigHelper.getInputSplitSize(conf);
         try {
-            Cassandra.Client client = 
-                CassandraConnectionUtils.createConnection(range.endpoints.get(0), ConfigHelper.getThriftPort(conf), false);
-            
+            Cassandra.Client client =             
+                CassandraConnectionUtils.createConnection(cassandraDataImportJobModel);
+                //CassandraConnectionUtils.createConnection(range.endpoints.get(0), ConfigHelper.getThriftPort(conf), false);
+                // TODO add config parameter for thrift == gossip interface
             splits = client.describe_splits(range.start_token, range.end_token, splitsize);
         } catch (TException e) {
             throw new RuntimeException(e);
