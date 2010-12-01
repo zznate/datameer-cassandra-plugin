@@ -4,10 +4,15 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
+
+import me.prettyprint.cassandra.service.CassandraHost;
 
 import org.apache.cassandra.hadoop.ConfigHelper;
 import org.apache.cassandra.thrift.SlicePredicate;
@@ -52,14 +57,16 @@ public class CassandraDataImportJobModel extends ImportJobModel<CassandraRowReco
 
     private static final String KEYSPACE = "cassandra.keyspace";
     private static final String COLUMN_FAMILY = "cassandra.columnFamily";
-    private static final String COLUMNS = "cassandra.columns";
+    private static final String COLUMNS = "cassandra.columns";    
     
     private String keyspace;
     private String columnFamily;
     private List<String> columnNames;
-    private int batchCount = 1000;
+    private int batchCount = 10000;
     private int sliceCount = 1000;
     private CassandraDataStoreModel dataStoreModel;
+    private CassandraHost[] cassandraHosts;
+    private int current;
     
     public CassandraDataImportJobModel(DataSourceConfiguration conf) {
         super(conf);
@@ -73,6 +80,7 @@ public class CassandraDataImportJobModel extends ImportJobModel<CassandraRowReco
                 columnNames.add(col);
             }
         }                
+        cassandraHosts = dataStoreModel.getCassandraHostConfigurator().buildCassandraHosts();
     }    
     
     public String getKeyspace() {
@@ -93,15 +101,19 @@ public class CassandraDataImportJobModel extends ImportJobModel<CassandraRowReco
 
     public int getSliceCount() {
         return sliceCount;
-    }
-    
+    }        
+        
     public CassandraDataStoreModel getCassandraDataStoreModel() {
         return dataStoreModel;
     }
     
+    public String getNextHost() {    
+        return cassandraHosts[++current == cassandraHosts.length ? 0 : current].getUrl();
+
+    }
+    
     public SlicePredicate getSlicePredicate() {
         SlicePredicate sp = new SlicePredicate();
-        //sp.addToColumn_names(elem)
         if ( columnNames != null && columnNames.size() > 0 ) {
             for (String colName : columnNames) {
                 try {

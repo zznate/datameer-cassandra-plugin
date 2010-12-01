@@ -157,31 +157,6 @@ public class CassandraColumnFamilyRecordSourceReader implements RecordSourceRead
             }
         }
 
-        // we don't use endpointsnitch since we are trying to support hadoop nodes that are
-        // not necessarily on Cassandra machines, too.  This should be adequate for single-DC clusters, at least.
-        private String getLocation() throws IOException {
-            InetAddress[] localAddresses = new InetAddress[0];
-            try {
-                localAddresses = InetAddress.getAllByName(InetAddress.getLocalHost().getHostAddress());
-            }
-            catch (UnknownHostException e) {
-                throw new AssertionError(e);
-            }
-          
-            for (InetAddress address : localAddresses) {
-                for (String location : columnFamilySplit.getLocations()) {
-                    InetAddress locationAddress = null;
-                    try {
-                        locationAddress = InetAddress.getByName(location);
-                    } catch (UnknownHostException e) {
-                        throw new AssertionError(e);
-                    } if (address.equals(locationAddress)) {
-                        return location;
-                    }
-                }
-            }
-            return columnFamilySplit.getLocations()[0];
-        }
 
         /**
          * @return total number of rows read by this record reader

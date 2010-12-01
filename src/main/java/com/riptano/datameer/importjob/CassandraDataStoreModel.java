@@ -2,6 +2,9 @@ package com.riptano.datameer.importjob;
 
 import java.io.IOException;
 
+import me.prettyprint.cassandra.service.CassandraHost;
+import me.prettyprint.cassandra.service.CassandraHostConfigurator;
+
 import org.apache.cassandra.hadoop.ConfigHelper;
 import org.apache.cassandra.thrift.Cassandra.Client;
 import org.apache.hadoop.conf.Configuration;
@@ -18,30 +21,29 @@ import datameer.dap.sdk.entity.DataStore;
  */
 public class CassandraDataStoreModel implements DataStoreModel {
 
-    private String host;
-    private int port;
-    private boolean framed;
+     
+    private CassandraHostConfigurator cassandraHostConfigurator;
+    private boolean preserveLocality;
     
+    static final String PRESERVE_LOCALITY = "cassandra.preserveLocality";
+    static final String USE_FRAMED = "cassandra.useFramed";
+    static final String HOSTS = "cassandra.hosts";
     
-    // constructor taking dataStore
     public CassandraDataStoreModel(DataStore dataStore) {
-        host = dataStore.getStringProperty("host", "localhost");
-        port = dataStore.getIntProperty("port", 9160);
-        framed = dataStore.getBooleanProperty("useFramedTransport", false);              
+        cassandraHostConfigurator = new CassandraHostConfigurator(dataStore.getStringProperty(HOSTS, "localhost:9160"));               
+        cassandraHostConfigurator.setUseThriftFramedTransport(dataStore.getBooleanProperty(USE_FRAMED, false));        
+        preserveLocality = dataStore.getBooleanProperty(PRESERVE_LOCALITY, false);
     }
+        
     
-    public String getCassandraHost() {
-        return host;        
+    public CassandraHostConfigurator getCassandraHostConfigurator() {
+        return cassandraHostConfigurator;
     }
-    
-    public int getCassandraPort() {
-        return port;
+
+    public boolean getPreserveLocality() {
+        return preserveLocality;
     }
-    
-    public boolean getUseFramed() {
-        return framed;
-    }
-    
+
     @Override
     public boolean isLocal() {
         return false;
@@ -51,16 +53,16 @@ public class CassandraDataStoreModel implements DataStoreModel {
     public void setupConf(Configuration conf) {
         // how do I take input from the page and apply it to Configuration?
         // here we can *WRITE TO* hadoop configuration
-        ConfigHelper.setThriftContact(conf, host, port);
-        conf.setBoolean(CassandraConnectionUtils.THRIFT_FRAMED_TRANSPORT, framed);
+        
     }
 
     @Override
     public void testConnect() throws InterruptedException {
-        
         Client client;
+        
         try {
-            client = CassandraConnectionUtils.createConnection(host, port, framed);
+            CassandraHost[] cassandraHosts = cassandraHostConfigurator.buildCassandraHosts();
+            client = CassandraConnectionUtils.createConnection(cassandraHosts[0]);
             client.describe_version();
         } catch (IOException ioe) {
             // This happens if we cannot connect to the cluster. CCU.createConnections builds details.

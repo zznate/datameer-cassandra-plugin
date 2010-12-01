@@ -41,17 +41,21 @@ public class CassandraDataStoreType extends DataStoreType {
 
         WizardPageDefinition page = new WizardPageDefinition("Apache Cassandra Connection Details");
         PropertyGroupDefinition group = page.addGroup("Apache Cassandra Connection Configuration Data");
-        PropertyDefinition propertyDefinition = new PropertyDefinition("host", "The IP address or hostname for any server in the Apache Cassandra cluster", PropertyType.STRING);
+        PropertyDefinition propertyDefinition = new PropertyDefinition(CassandraDataStoreModel.HOSTS, 
+                "One or more comma-delimited hosts/port combinations. For example: 'localhost:9160' or 'cass1:9160,cass2:9160,cass3:9160'", 
+                PropertyType.STRING);
         propertyDefinition.setRequired(true);
         propertyDefinition.setValidators(new NonEmptyValidator());
         group.addPropertyDefinition(propertyDefinition);
-
-        propertyDefinition = new PropertyDefinition("port", "The port on which Apache Cassandra's Thrift service is bound.", PropertyType.STRING);
-        propertyDefinition.setRequired(true);
-        propertyDefinition.setValidators(new NonEmptyValidator());
+        
+        propertyDefinition = new PropertyDefinition(CassandraDataStoreModel.USE_FRAMED, 
+                "True if configured for TFramedTransport", PropertyType.BOOLEAN);
+        propertyDefinition.setRequired(false);
         group.addPropertyDefinition(propertyDefinition);
-
-        propertyDefinition = new PropertyDefinition("framed", "True if configured for TFramedTransport", PropertyType.BOOLEAN);
+        
+        propertyDefinition = new PropertyDefinition(CassandraDataStoreModel.PRESERVE_LOCALITY, 
+                "True if Thrift and Gossip share the same interface (allows usage of the more efficient describe_splits method).", 
+                PropertyType.BOOLEAN);
         propertyDefinition.setRequired(false);
         group.addPropertyDefinition(propertyDefinition);
 

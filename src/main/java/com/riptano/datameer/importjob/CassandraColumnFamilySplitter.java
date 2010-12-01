@@ -57,6 +57,20 @@ public class CassandraColumnFamilySplitter implements Splitter<CassandraColumnFa
         // here is where we will hand off the Configuration
         // cannonical ranges and nodes holding replicas
         Configuration conf = splitHint.getConf();
+        List<CassandraColumnFamilySplit> splits = null;
+        if ( cassandraDataImportJobModel.getCassandraDataStoreModel().getPreserveLocality() ) {
+            splits = createLocalityPreservingSplits(conf);
+        } else {
+            //splits =  
+            // we will still split these the same way, just ignore the hosts
+            // 
+        }
+        
+        return splits.toArray(new CassandraColumnFamilySplit[]{});
+    }
+
+    
+    private List<CassandraColumnFamilySplit> createLocalityPreservingSplits(Configuration conf) throws IOException {
         List<TokenRange> masterRangeNodes = getRangeMap(conf);
         
         // cannonical ranges, split into pieces, fetching the splits in parallel 
@@ -86,9 +100,8 @@ public class CassandraColumnFamilySplitter implements Splitter<CassandraColumnFa
 
         assert splits.size() > 0;
         Collections.shuffle(splits, new Random(System.nanoTime()));
-        return splits.toArray(new CassandraColumnFamilySplit[]{});
+        return splits;
     }
-
     
     private List<TokenRange> getRangeMap(Configuration conf) throws IOException
     {
@@ -111,7 +124,7 @@ public class CassandraColumnFamilySplitter implements Splitter<CassandraColumnFa
     {
         // TODO handle failure of range replicas & retry
         List<String> splits;
-        int splitsize = ConfigHelper.getInputSplitSize(conf);
+        int splitsize = cassandraDataImportJobModel.getBatchCount();
         try {
             Cassandra.Client client =             
                 CassandraConnectionUtils.createConnection(cassandraDataImportJobModel);
@@ -142,9 +155,14 @@ public class CassandraColumnFamilySplitter implements Splitter<CassandraColumnFa
 
             // turn the sub-ranges into InputSplits
             String[] endpoints = range.endpoints.toArray(new String[range.endpoints.size()]);
-            // hadoop needs hostname, not ip
+            // TODO if preserveLocality is false, choose host(s) from random
+
             for (int i = 0; i < endpoints.length; i++) {
-                endpoints[i] = InetAddress.getByName(endpoints[i]).getHostName();
+                if ( cassandraDataImportJobModel.getCassandraDataStoreModel().getPreserveLocality() ) {
+                    endpoints[i] = InetAddress.getByName(endpoints[i]).getHostName();
+                } else {
+                    endpoints[i] = cassandraDataImportJobModel.getNextHost();
+                }
             }
             
             return buildSplits(tokens, endpoints);

@@ -2,6 +2,8 @@ package com.riptano.datameer.importjob;
 
 import java.io.IOException;
 
+import me.prettyprint.cassandra.service.CassandraHost;
+
 import org.apache.cassandra.hadoop.ConfigHelper;
 import org.apache.cassandra.thrift.Cassandra;
 import org.apache.hadoop.conf.Configuration;
@@ -13,12 +15,17 @@ import org.apache.thrift.transport.TTransportException;
 
 public class CassandraConnectionUtils {
     
+    // TODO this will probably go away in favour of H. plumbing
+    
     public static final String THRIFT_FRAMED_TRANSPORT = "use_thrift_framed_transport";
     
     public static Cassandra.Client createConnection(CassandraDataImportJobModel dataImportJobModel) throws IOException {
-        return createConnection(dataImportJobModel.getCassandraDataStoreModel().getCassandraHost(), 
-                    dataImportJobModel.getCassandraDataStoreModel().getCassandraPort(), 
-                    dataImportJobModel.getCassandraDataStoreModel().getUseFramed());
+        CassandraHost[] hosts = dataImportJobModel.getCassandraDataStoreModel().getCassandraHostConfigurator().buildCassandraHosts();
+        return createConnection(hosts[0]);
+    }
+    
+    public static Cassandra.Client createConnection(CassandraHost cassandraHost) throws IOException {
+        return createConnection(cassandraHost.getHost(), cassandraHost.getPort(), cassandraHost.getUseThriftFramedTransport());
     }
     
     public static Cassandra.Client createConnection(String host, Integer port, boolean framed) throws IOException {
