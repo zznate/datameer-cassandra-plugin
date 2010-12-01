@@ -55,36 +55,18 @@ public class CassandraColumnFamilySplitter implements Splitter<CassandraColumnFa
         // this is the "noodle the tokens" portion
         // just like getSplits() on CFIF
         // here is where we will hand off the Configuration
-        // cannonical ranges and nodes holding replicas
         Configuration conf = splitHint.getConf();
-        List<CassandraColumnFamilySplit> splits = null;
-        if ( cassandraDataImportJobModel.getCassandraDataStoreModel().getPreserveLocality() ) {
-            splits = createLocalityPreservingSplits(conf);
-        } else {
-            //splits =  
-            // we will still split these the same way, just ignore the hosts
-            // 
-        }
-        
-        return splits.toArray(new CassandraColumnFamilySplit[]{});
-    }
-
-    
-    private List<CassandraColumnFamilySplit> createLocalityPreservingSplits(Configuration conf) throws IOException {
         List<TokenRange> masterRangeNodes = getRangeMap(conf);
         
-        // cannonical ranges, split into pieces, fetching the splits in parallel 
         ExecutorService executor = Executors.newCachedThreadPool();
         List<CassandraColumnFamilySplit> splits = new ArrayList<CassandraColumnFamilySplit>();
 
         try {
             List<Future<List<CassandraColumnFamilySplit>>> splitfutures = new ArrayList<Future<List<CassandraColumnFamilySplit>>>();
-            for (TokenRange range : masterRangeNodes) {
-                // for each range, pick a live owner and ask it to compute bite-sized splits
+            for (TokenRange range : masterRangeNodes) {       
                 splitfutures.add(executor.submit(new SplitCallable(range, conf)));
             }
     
-            // wait until we have all the results back
             for (Future<List<CassandraColumnFamilySplit>> futureInputSplits : splitfutures) {
                 try {
                     splits.addAll(futureInputSplits.get());
@@ -100,8 +82,11 @@ public class CassandraColumnFamilySplitter implements Splitter<CassandraColumnFa
 
         assert splits.size() > 0;
         Collections.shuffle(splits, new Random(System.nanoTime()));
-        return splits;
+        
+        return splits.toArray(new CassandraColumnFamilySplit[]{});
     }
+
+    
     
     private List<TokenRange> getRangeMap(Configuration conf) throws IOException
     {
