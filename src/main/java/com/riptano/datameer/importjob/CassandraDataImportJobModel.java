@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import me.prettyprint.cassandra.service.CassandraHost;
 
@@ -66,7 +67,7 @@ public class CassandraDataImportJobModel extends ImportJobModel<CassandraRowReco
     private int sliceCount = 1000;
     private CassandraDataStoreModel dataStoreModel;
     private CassandraHost[] cassandraHosts;
-    private int current;
+    private AtomicInteger current;
     
     public CassandraDataImportJobModel(DataSourceConfiguration conf) {
         super(conf);
@@ -107,9 +108,13 @@ public class CassandraDataImportJobModel extends ImportJobModel<CassandraRowReco
         return dataStoreModel;
     }
     
-    public String getNextHost() {    
-        return cassandraHosts[++current == cassandraHosts.length ? 0 : current].getUrl();
-
+    public String getNextHost() {
+        int i = current.incrementAndGet();
+        if (i >= cassandraHosts.length ) {            
+            current.compareAndSet(i, 0);
+            i = 0;
+        }
+        return cassandraHosts[i].getUrl();
     }
     
     public SlicePredicate getSlicePredicate() {
