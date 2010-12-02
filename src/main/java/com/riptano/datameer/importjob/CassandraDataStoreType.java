@@ -27,12 +27,12 @@ public class CassandraDataStoreType extends DataStoreType {
 
     @Override
     public String getId() {
-        return ID;
+        return "DataStore for Apache Cassandra 0.6.x";
     }
 
     @Override
     public String getName() {
-        return "Cassandra Data Creator";
+        return "DataStore for Apache Cassandra 0.6.x";
     }
 
 

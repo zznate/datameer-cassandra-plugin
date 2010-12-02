@@ -60,15 +60,16 @@ public class CassandraDataImportJobModel extends ImportJobModel<CassandraRowReco
     private static final String COLUMN_FAMILY = "cassandra.columnFamily";
     private static final String COLUMNS = "cassandra.columns";    
     private static final String BATCH_SIZE = "cassandra.batchSize";
+    private static final String SLICE_COUNT = "cassandra.sliceCount";
     
     private String keyspace;
     private String columnFamily;
     private List<String> columnNames;
-    private int batchCount = 10000;
-    private int sliceCount = 1000;
+    private int batchCount;
+    private int sliceCount;
     private CassandraDataStoreModel dataStoreModel;
-    private CassandraHost[] cassandraHosts;
-    private AtomicInteger current;
+    private String[] hostUrls;
+    private AtomicInteger current = new AtomicInteger();
     
     public CassandraDataImportJobModel(DataSourceConfiguration conf) {
         super(conf);
@@ -82,8 +83,15 @@ public class CassandraDataImportJobModel extends ImportJobModel<CassandraRowReco
                 columnNames.add(col);
             }
         }                
-        cassandraHosts = dataStoreModel.getCassandraHostConfigurator().buildCassandraHosts();
+        CassandraHost[] cassandraHosts = dataStoreModel.getCassandraHostConfigurator().buildCassandraHosts();
+        hostUrls = new String[cassandraHosts.length];
+        for (int i = 0; i < cassandraHosts.length; i++) {
+            hostUrls[i] = cassandraHosts[i].getUrl();
+        }
+            
+        
         batchCount = conf.getIntProperty(BATCH_SIZE, 10000);
+        sliceCount = conf.getIntProperty(SLICE_COUNT, 100);
     }    
     
     public String getKeyspace() {
@@ -104,7 +112,11 @@ public class CassandraDataImportJobModel extends ImportJobModel<CassandraRowReco
 
     public int getSliceCount() {
         return sliceCount;
-    }        
+    }   
+    
+    public boolean getHasColumns() {
+        return !columnNames.isEmpty();
+    }
         
     public CassandraDataStoreModel getCassandraDataStoreModel() {
         return dataStoreModel;
@@ -112,11 +124,11 @@ public class CassandraDataImportJobModel extends ImportJobModel<CassandraRowReco
     
     public String getNextHost() {
         int i = current.incrementAndGet();
-        if (i >= cassandraHosts.length ) {            
+        if (i >= hostUrls.length ) {            
             current.compareAndSet(i, 0);
             i = 0;
         }
-        return cassandraHosts[i].getUrl();
+        return hostUrls[i];
     }
     
     public SlicePredicate getSlicePredicate() {
