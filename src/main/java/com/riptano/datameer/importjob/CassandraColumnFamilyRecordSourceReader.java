@@ -115,7 +115,9 @@ public class CassandraColumnFamilyRecordSourceReader implements RecordSourceRead
             
             if (rows != null)
                 return;
-            
+            if ( log.isDebugEnabled() ) {
+                log.debug("Working ColumnFamilySplit: " + columnFamilySplit);
+            }
             if (startToken == null) {
                 startToken = columnFamilySplit.getStartToken();
             } 

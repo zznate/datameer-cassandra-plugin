@@ -21,6 +21,7 @@ import org.apache.cassandra.thrift.SliceRange;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapred.InputSplit;
 import org.apache.hadoop.mapred.JobConf;
+import org.apache.log4j.Logger;
 
 import datameer.dap.sdk.common.Field;
 import datameer.dap.sdk.entity.DataSourceConfiguration;
@@ -55,6 +56,8 @@ import datameer.dap.sdk.property.WizardPageDefinition;
  * @author zznate <nate@riptano.com>
  */
 public class CassandraDataImportJobModel extends ImportJobModel<CassandraRowRecord> {
+    
+    static Logger log = Logger.getLogger(CassandraDataImportJobModel.class);
 
     private static final String KEYSPACE = "cassandra.keyspace";
     private static final String COLUMN_FAMILY = "cassandra.columnFamily";
@@ -133,14 +136,17 @@ public class CassandraDataImportJobModel extends ImportJobModel<CassandraRowReco
     
     public SlicePredicate getSlicePredicate() {
         SlicePredicate sp = new SlicePredicate();
-        if ( columnNames != null && columnNames.size() > 0 ) {
+        if ( getHasColumns() ) {
             for (String colName : columnNames) {
                 try {
                     sp.addToColumn_names(colName.getBytes("UTF-8"));
                 } catch (Exception e) { }            
             }
         } else {
-            sp.setSlice_range(new SliceRange(new byte[]{}, new byte[]{}, false, 2));
+            sp.setSlice_range(new SliceRange(new byte[]{}, new byte[]{}, false, sliceCount));
+        }
+        if ( log.isDebugEnabled() ) {
+            log.debug("Built SlicePredicate: " + sp);
         }
         return sp;
     }
