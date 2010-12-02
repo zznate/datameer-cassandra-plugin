@@ -59,6 +59,7 @@ public class CassandraDataImportJobModel extends ImportJobModel<CassandraRowReco
     private static final String KEYSPACE = "cassandra.keyspace";
     private static final String COLUMN_FAMILY = "cassandra.columnFamily";
     private static final String COLUMNS = "cassandra.columns";    
+    private static final String BATCH_SIZE = "cassandra.batchSize";
     
     private String keyspace;
     private String columnFamily;
@@ -82,6 +83,7 @@ public class CassandraDataImportJobModel extends ImportJobModel<CassandraRowReco
             }
         }                
         cassandraHosts = dataStoreModel.getCassandraHostConfigurator().buildCassandraHosts();
+        batchCount = conf.getIntProperty(BATCH_SIZE, 10000);
     }    
     
     public String getKeyspace() {
@@ -158,6 +160,11 @@ public class CassandraDataImportJobModel extends ImportJobModel<CassandraRowReco
         propertyDefinition.setRequired(false);
         propertyDefinition.setValidators(new NonEmptyValidator());
         group.addPropertyDefinition(propertyDefinition);     
+        
+        propertyDefinition = new PropertyDefinition(BATCH_SIZE, "The number of rows to read off for a split. The default is 10000", PropertyType.STRING);
+        propertyDefinition.setRequired(false);
+        propertyDefinition.setValidators(new NonEmptyValidator());
+        group.addPropertyDefinition(propertyDefinition); 
         
         return page;
     }
