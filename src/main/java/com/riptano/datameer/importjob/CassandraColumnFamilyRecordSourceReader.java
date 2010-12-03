@@ -76,7 +76,7 @@ public class CassandraColumnFamilyRecordSourceReader implements RecordSourceRead
         if ( next == null ) {
            return null; 
         }
-        return new CassandraRowRecord(next.left, next.right);        
+        return new CassandraRowRecord(next.left, next.right, rowIterator.comparator, rowIterator.subComparator, rowIterator.partitioner);        
     }
     
     
@@ -178,8 +178,9 @@ public class CassandraColumnFamilyRecordSourceReader implements RecordSourceRead
             
             totalRead++;
             KeySlice ks = rows.get(i++);
+
             SortedMap<byte[], IColumn> map = new TreeMap<byte[], IColumn>(comparator);
-            for (ColumnOrSuperColumn cosc : ks.columns) {
+            for (ColumnOrSuperColumn cosc : ks.columns) {                
                 IColumn column = unthriftify(cosc);
                 map.put(column.name(), column);
             }

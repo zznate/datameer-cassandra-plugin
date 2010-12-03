@@ -35,7 +35,7 @@ public class CassandraRecordParser extends AbstractRecordParser<CassandraRowReco
             if ( origin.equals(CassandraRowRecordSchemaDector.KEY_FIELD_ORIGIN)) {
                 values[index++] = arg1.getKey();
             } else if (columns.contains(origin)) {
-                values[index++] = new String(arg1.getRows().get(origin.getBytes(UTF_8)).value(), UTF_8);                
+                values[index++] = arg1.getColumnValueAsString(origin.getBytes(UTF_8));                
             }
         }
         arg0.collect(new Record(getIncludedFieldTypes(), values));        

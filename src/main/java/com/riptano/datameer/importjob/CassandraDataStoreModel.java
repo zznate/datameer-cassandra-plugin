@@ -13,14 +13,15 @@ import datameer.dap.sdk.datastore.DataStoreModel;
 import datameer.dap.sdk.entity.DataStore;
 
 /**
- * Sets up the connection information used to connect with Cassandra cluster
+ * Sets up the connection information used to connect with Cassandra cluster.
  * 
  * @author zznate <nate@riptano.com>
  *
  */
 public class CassandraDataStoreModel implements DataStoreModel {
-
-     
+    
+    private static final long serialVersionUID = -4448985475836434591L;
+    
     private CassandraHostConfigurator cassandraHostConfigurator;
     private boolean preserveLocality;
     
@@ -50,9 +51,7 @@ public class CassandraDataStoreModel implements DataStoreModel {
 
     @Override
     public void setupConf(Configuration conf) {
-        // how do I take input from the page and apply it to Configuration?
-        // here we can *WRITE TO* hadoop configuration
-        
+        // no-op. We pass around data via datameer's conf structure
     }
 
     @Override
