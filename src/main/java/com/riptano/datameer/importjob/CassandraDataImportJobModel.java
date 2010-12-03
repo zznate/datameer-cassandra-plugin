@@ -1,44 +1,20 @@
 package com.riptano.datameer.importjob;
 
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import me.prettyprint.cassandra.service.CassandraHost;
 
-import org.apache.cassandra.hadoop.ConfigHelper;
 import org.apache.cassandra.thrift.SlicePredicate;
 import org.apache.cassandra.thrift.SliceRange;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.mapred.InputSplit;
-import org.apache.hadoop.mapred.JobConf;
+import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 
-import datameer.dap.sdk.common.Field;
 import datameer.dap.sdk.entity.DataSourceConfiguration;
-import datameer.dap.sdk.function.FieldType;
-import datameer.dap.sdk.importjob.AbstractImportFormat;
 import datameer.dap.sdk.importjob.ImportFormat;
 import datameer.dap.sdk.importjob.ImportJobModel;
-import datameer.dap.sdk.importjob.MapBasedRecordParser;
-import datameer.dap.sdk.importjob.MapBasedRecordSchemaDetector;
-import datameer.dap.sdk.importjob.MapParser;
-import datameer.dap.sdk.importjob.NoDataRecordSchemaDetector;
-import datameer.dap.sdk.importjob.RecordParser;
-import datameer.dap.sdk.importjob.RecordSchemaDetector;
-import datameer.dap.sdk.importjob.RecordSourceReader;
-import datameer.dap.sdk.importjob.TextFieldAnalyzer;
 import datameer.dap.sdk.property.NonEmptyValidator;
-import datameer.dap.sdk.property.NumberValidator;
 import datameer.dap.sdk.property.PropertyDefinition;
 import datameer.dap.sdk.property.PropertyGroupDefinition;
 import datameer.dap.sdk.property.PropertyType;
@@ -72,10 +48,14 @@ public class CassandraDataImportJobModel extends ImportJobModel<CassandraRowReco
     private int sliceCount;
     private CassandraDataStoreModel dataStoreModel;
     private String[] hostUrls;
-    private AtomicInteger current = new AtomicInteger();
+    private AtomicInteger current = new AtomicInteger();    
     
     public CassandraDataImportJobModel(DataSourceConfiguration conf) {
-        super(conf);
+        super(conf);                
+        init(getConfiguration());
+    }    
+    
+    void init(DataSourceConfiguration conf) {        
         dataStoreModel = new CassandraDataStoreModel(conf.getDataStore());
         keyspace = conf.getStringProperty(KEYSPACE, null);
         columnFamily = conf.getStringProperty(COLUMN_FAMILY, null);
@@ -83,19 +63,20 @@ public class CassandraDataImportJobModel extends ImportJobModel<CassandraRowReco
         columnNames = new ArrayList<String>();
         if ( conf.getStringProperty(COLUMNS, null) != null ) {
             for (String col : conf.getStringProperty(COLUMNS, null).split(",")) {
-                columnNames.add(col);
+                columnNames.add(StringUtils.strip(col));                
             }
         }                
+        if ( log.isDebugEnabled() ) {
+            log.debug("Added column names: " + columnNames);
+        }
         CassandraHost[] cassandraHosts = dataStoreModel.getCassandraHostConfigurator().buildCassandraHosts();
         hostUrls = new String[cassandraHosts.length];
         for (int i = 0; i < cassandraHosts.length; i++) {
             hostUrls[i] = cassandraHosts[i].getUrl();
-        }
-            
-        
-        batchCount = conf.getIntProperty(BATCH_SIZE, 10000);
+        }                    
+        batchCount = conf.getIntProperty(BATCH_SIZE, 10000);        
         sliceCount = conf.getIntProperty(SLICE_COUNT, 100);
-    }    
+    }
     
     public String getKeyspace() {
         return keyspace;
@@ -164,22 +145,32 @@ public class CassandraDataImportJobModel extends ImportJobModel<CassandraRowReco
     public WizardPageDefinition createDetailsWizardPage() {
         WizardPageDefinition page = new WizardPageDefinition("Details");
         PropertyGroupDefinition group = page.addGroup("Cassandra Configuration Data");
-        PropertyDefinition propertyDefinition = new PropertyDefinition(KEYSPACE, "The Keyspace to use. Similar to a 'database' in SQL", PropertyType.STRING);
+        PropertyDefinition propertyDefinition = new PropertyDefinition(KEYSPACE, "Keyspace", PropertyType.STRING);
+        propertyDefinition.setHelpText("The Keyspace to use. Similar to a 'database' in SQL");
         propertyDefinition.setRequired(true);
         propertyDefinition.setValidators(new NonEmptyValidator());
         group.addPropertyDefinition(propertyDefinition);
 
-        propertyDefinition = new PropertyDefinition(COLUMN_FAMILY, "The ColumnFamily which holds the data. Similar to 'table' in SQL", PropertyType.STRING);
+        propertyDefinition = new PropertyDefinition(COLUMN_FAMILY, "Column Family", PropertyType.STRING);
         propertyDefinition.setRequired(true);
+        propertyDefinition.setHelpText("The ColumnFamily which holds the data. Similar to 'table' in SQL");
         propertyDefinition.setValidators(new NonEmptyValidator());
         group.addPropertyDefinition(propertyDefinition);
 
-        propertyDefinition = new PropertyDefinition(COLUMNS, "The Columns which will be imported (comma separated)", PropertyType.STRING);
+        propertyDefinition = new PropertyDefinition(COLUMNS, "Columns", PropertyType.STRING);
+        propertyDefinition.setHelpText("The Columns which will be imported (comma delimited). Leave blank for all columns.");
         propertyDefinition.setRequired(false);
         propertyDefinition.setValidators(new NonEmptyValidator());
         group.addPropertyDefinition(propertyDefinition);     
         
-        propertyDefinition = new PropertyDefinition(BATCH_SIZE, "The number of rows to read off for a split. The default is 10000", PropertyType.STRING);
+        propertyDefinition = new PropertyDefinition(SLICE_COUNT, "Column Count", PropertyType.STRING);
+        propertyDefinition.setHelpText("The number of columns to read for a given row. Ignored if 'Columns' is specified above.");
+        propertyDefinition.setRequired(false);
+        propertyDefinition.setValidators(new NonEmptyValidator());
+        group.addPropertyDefinition(propertyDefinition); 
+        
+        propertyDefinition = new PropertyDefinition(BATCH_SIZE, "Split Size", PropertyType.STRING);
+        propertyDefinition.setHelpText("The number of rows to read off for a split. The default is 10000");
         propertyDefinition.setRequired(false);
         propertyDefinition.setValidators(new NonEmptyValidator());
         group.addPropertyDefinition(propertyDefinition); 
@@ -204,14 +195,12 @@ public class CassandraDataImportJobModel extends ImportJobModel<CassandraRowReco
 
     @Override
     public void addPropertyValuesThatTriggerAFilterReset(List<Object> arg0) {
-        // TODO Auto-generated method stub
-        
+        // no-op
     }
 
     @Override
     public void resetFilters() {
-        // TODO Auto-generated method stub
-        
+        // no-op
     }
 }
 

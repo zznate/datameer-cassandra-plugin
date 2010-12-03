@@ -11,24 +11,24 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-import org.apache.cassandra.hadoop.ColumnFamilySplit;
-import org.apache.cassandra.hadoop.ConfigHelper;
 import org.apache.cassandra.thrift.Cassandra;
-import org.apache.cassandra.thrift.ColumnParent;
-import org.apache.cassandra.thrift.ConsistencyLevel;
 import org.apache.cassandra.thrift.InvalidRequestException;
-import org.apache.cassandra.thrift.KeyRange;
-import org.apache.cassandra.thrift.KeySlice;
-import org.apache.cassandra.thrift.SlicePredicate;
-import org.apache.cassandra.thrift.SliceRange;
 import org.apache.cassandra.thrift.TokenRange;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.log4j.Logger;
 import org.apache.thrift.TException;
 
 import datameer.dap.sdk.importjob.Splitter;
 
+/**
+ * Creates the splits required for job distribution. If you run Thrift and Gossip on the 
+ * same interface, use {@link CassandraDataStoreModel#getPreserveLocality()} to facilitate
+ * locality-preserving distribution via the describe_splits method in the Apache Cassandra
+ * Thrift API. 
+ * 
+ * @author zznate <nate@riptano.com>
+ * 
+ */
 public class CassandraColumnFamilySplitter implements Splitter<CassandraColumnFamilySplit> {
 
     private static Logger log = Logger.getLogger(CassandraColumnFamilySplit.class);

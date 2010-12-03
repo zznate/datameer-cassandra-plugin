@@ -1,8 +1,6 @@
 package com.riptano.datameer.importjob;
 
 import java.io.IOException;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
@@ -11,8 +9,6 @@ import java.util.TreeMap;
 import org.apache.cassandra.db.IColumn;
 import org.apache.cassandra.db.marshal.AbstractType;
 import org.apache.cassandra.dht.IPartitioner;
-import org.apache.cassandra.hadoop.ConfigHelper;
-import org.apache.cassandra.service.StorageService;
 import org.apache.cassandra.thrift.Cassandra;
 import org.apache.cassandra.thrift.Column;
 import org.apache.cassandra.thrift.ColumnOrSuperColumn;
@@ -32,6 +28,13 @@ import com.google.common.collect.AbstractIterator;
 
 import datameer.dap.sdk.importjob.RecordSourceReader;
 
+/**
+ * Loosely based on o.a.c.h.ColumnFamilyRecordReader in the 0.7.x version of
+ * Apache Cassandra. 
+ * 
+ * @author zznate <nate@riptano.com>
+ *
+ */
 public class CassandraColumnFamilyRecordSourceReader implements RecordSourceReader<CassandraRowRecord> {
     
     private static Logger log = Logger.getLogger(CassandraColumnFamilyRecordSourceReader.class);
@@ -90,7 +93,7 @@ public class CassandraColumnFamilyRecordSourceReader implements RecordSourceRead
         private RowIterator() {           
             try {
                 client = CassandraConnectionUtils.createConnection(dataImportJobModel);
-                
+
                 partitioner = FBUtilities.newPartitioner(client.describe_partitioner());
 
                 Map<String, String> info = client.describe_keyspace(dataImportJobModel.getKeyspace())

@@ -7,6 +7,7 @@ import org.apache.cassandra.db.IColumn;
 
 public class CassandraRowRecord {
 
+    private static final String MSG_FORMAT = "CassandraRowRecord[key=%s,cols=%s]";
     private final String key;
     private final SortedMap<byte[], IColumn> rows;
     
@@ -25,6 +26,6 @@ public class CassandraRowRecord {
     
     @Override
     public String toString() {
-        return String.format("CassandraRowRecord[key=%s,cols=%s]", key, rows != null ? rows.toString() : "<no rows found>");
+        return String.format(MSG_FORMAT, key, rows != null ? rows.toString() : "<no rows found>");
     }
 }

@@ -5,7 +5,6 @@ import java.io.IOException;
 import me.prettyprint.cassandra.service.CassandraHost;
 import me.prettyprint.cassandra.service.CassandraHostConfigurator;
 
-import org.apache.cassandra.hadoop.ConfigHelper;
 import org.apache.cassandra.thrift.Cassandra.Client;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.thrift.TException;

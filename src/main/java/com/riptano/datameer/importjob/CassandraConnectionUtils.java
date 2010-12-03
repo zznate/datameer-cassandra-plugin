@@ -4,18 +4,20 @@ import java.io.IOException;
 
 import me.prettyprint.cassandra.service.CassandraHost;
 
-import org.apache.cassandra.hadoop.ConfigHelper;
 import org.apache.cassandra.thrift.Cassandra;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.transport.TFramedTransport;
 import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
 
+/**
+ * Utility class to handle opening Thrift connections to Apache Cassandra
+ * 
+ * @author zznate <nate@riptano.com>
+ *
+ */
 public class CassandraConnectionUtils {
-    
-    // TODO this will probably go away in favour of H. plumbing
     
     public static final String THRIFT_FRAMED_TRANSPORT = "use_thrift_framed_transport";
     
