@@ -1,4 +1,19 @@
 Overview
 ---------
 
-This is a DataStore-type plug-in for using Apache Cassandra with Datameer. It is currently under active development.
+This is a DataStore-type plug-in for using Apache Cassandra version 0.6.x with Datameer. The wizard setup pages for Data Store and Import Job contain details for configuration.
+
+Currently supported features:
+-----------------------------
++ Specify multiple hosts from which to retrieve data
++ If Thrift and Gossip ports share an interface, host information will be automatically determined from the ring (via describe_splits Thrift method)
++ Specify columns to be retrieved
++ User-controlled Split sizes
++ Support for framed and non-framed Thrift transports
+
+
+Todo:
+-----
++ Handle Super columns
++ Better handling of type inference for column names
+
